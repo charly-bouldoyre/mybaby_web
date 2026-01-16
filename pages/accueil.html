@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>MyBaby — Carte</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+  <!-- CSS global + spécifique -->
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/accueil.css">
+</head>
+
+<body>
+
+<header>
+  <div class="brand">MyBaby — Carte</div>
+  <nav>
+    <a href="../index.html">Menu</a>
+    <a href="profile.html">Profil</a>
+    <a href="duel.html">Duel</a>
+    <a href="events.html">Événements</a>
+    <a href="stats.html">Classement</a>
+</nav>
+</header>
+
+<main class="container">
+  <div class="map-wrap">
+    <div id="map"></div>
+
+    <div class="legend">
+      <strong>Légende</strong>
+      <div class="legend-item">
+        <svg width="18" height="18">
+          <circle cx="9" cy="9" r="7" fill="#bc1515"/>
+        </svg>
+        <span>Bar / Babyfoot</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="ctrl-btn">🔎 Recherche</button>
+      <button class="ctrl-btn">⚙️ Filtre</button>
+      <button class="ctrl-btn">＋ Ajouter</button>
+    </div>
+  </div>
+</main>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- JS spécifique -->
+<script src="../js/accueil.js"></script>
+
+</body>
+</html>
