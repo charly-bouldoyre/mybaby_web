@@ -1,0 +1,107 @@
+:root{
+  --bg: #f6f0e8;
+  --card: #ffffff;
+  --accent: #bc1515;
+  --muted: #666;
+  --max-width: 980px;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;
+  background:var(--bg);
+  color:#222;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+/* Centering container */
+.center{width:100%;max-width:var(--max-width);}
+
+/* Card */
+.card{
+  background:var(--card);
+  border-radius:12px;
+  padding:18px;
+  box-shadow:0 8px 28px rgba(0,0,0,0.08);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  width:100%;
+}
+
+/* Brand */
+.brand{
+  font-size:1.15rem;
+  font-weight:800;
+  color:var(--accent);
+  margin:0;
+  text-align:center;
+}
+
+/* Switch */
+.switch{display:flex;gap:8px}
+.switch-btn{
+  flex:1;
+  padding:8px 10px;
+  border-radius:8px;
+  border:1px solid #eee;
+  background:#fafafa;
+  cursor:pointer;
+  font-weight:700;
+  transition: background .12s ease, box-shadow .12s ease;
+}
+.switch-btn:focus{outline:none;box-shadow:0 0 0 3px rgba(188,21,21,0.06)}
+.switch-btn.active{background:#fff;border:1px solid #ddd;box-shadow:0 1px 0 rgba(0,0,0,0.03)}
+
+/* Form */
+.form{display:block}
+.form label{display:block;margin:8px 0 4px;font-size:0.9rem}
+.form input[type="text"],
+.form input[type="email"],
+.form input[type="password"]{
+  width:100%;
+  padding:10px 12px;
+  border-radius:8px;
+  border:1px solid #e6e6e6;
+  background:#fff;
+  font-size:0.95rem;
+  outline:none;
+}
+.form input:focus{box-shadow:0 0 0 3px rgba(188,21,21,0.06);border-color:var(--accent);}
+
+/* Actions */
+.actions{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  margin-top:8px;
+}
+.btn{
+  padding:9px 12px;
+  border-radius:8px;
+  font-weight:700;
+  cursor:pointer;
+  border:none;
+}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.ghost{background:transparent;border:1px solid rgba(0,0,0,0.06);color:#333}
+
+/* Messages */
+.msg{font-size:0.9rem;margin-top:6px}
+.error{color:#b00020;display:none}
+
+/* Info */
+.info{text-align:center;color:var(--muted);font-size:0.9rem}
+
+/* Responsive */
+@media (max-width:680px){
+  body{padding:12px}
+  .card{padding:14px}
+  .switch{flex-direction:row}
+  .actions{flex-direction:column-reverse;align-items:stretch}
+  .actions .btn{width:100%}
+}
