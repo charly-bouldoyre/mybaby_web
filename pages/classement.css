@@ -1,0 +1,83 @@
+:root{
+  --bg:#f8f4eb;
+  --text:#2e2e2e;
+  --card:#fff;
+  --muted:#666;
+  --accent:#bc1515;
+  --experts:#b71c1c;
+  --champion:#d46b6b;
+  --confirme:#e9b1b1;
+  --inter:#7fb7ef;
+  --deb:#2f9bdf;
+  --shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+*{box-sizing:border-box}
+body{margin:0;font-family:"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+header{background:var(--accent);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-weight:800}
+nav{display:flex;gap:8px;align-items:center}
+.nav-btn{display:inline-flex;align-items:center;padding:8px 12px;background:rgba(255,255,255,0.06);color:#fff;text-decoration:none;border-radius:10px;font-weight:700}
+
+/* layout */
+.wrap{max-width:900px;margin:18px auto;padding:12px}
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.page-head h1{margin:0;font-size:1.1rem}
+.controls{display:flex;gap:8px;align-items:center}
+.search{padding:8px;border-radius:8px;border:1px solid #ddd;width:220px}
+
+/* categories */
+.categories{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 14px}
+.cat-btn{padding:10px 14px;border-radius:999px;border:none;cursor:pointer;font-weight:800;color:#fff;min-width:100px;transition:transform .12s,box-shadow .12s}
+.cat-btn.active{transform:translateY(-4px);box-shadow:var(--shadow)}
+.cat-experts{background:linear-gradient(180deg,var(--experts),#8f1414)}
+.cat-champion{background:linear-gradient(180deg,var(--champion),#c25a5a)}
+.cat-confirme{background:linear-gradient(180deg,var(--confirme),#e7bdbd);color:#2b2b2b}
+.cat-inter{background:linear-gradient(180deg,var(--inter),#4aa0ff)}
+.cat-deb{background:linear-gradient(180deg,var(--deb),#1f77c7)}
+
+/* board/list */
+.board{background:var(--card);border-radius:12px;padding:12px;border:1px solid rgba(0,0,0,0.04);box-shadow:var(--shadow)}
+.ranking-list{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.player-item{display:flex;align-items:center;gap:12px;padding:10px;border-radius:8px;background:#fff;border:1px solid #eee}
+.player-item.you{outline:3px solid rgba(188,21,21,0.12);background:linear-gradient(180deg,#fff8f8,#fff)}
+.player-item.flash{animation:flash-bg .9s ease}
+@keyframes flash-bg { from { box-shadow:0 0 0 6px rgba(188,21,21,0.06);} to { box-shadow:none;} }
+
+.rank{width:42px;font-weight:900;text-align:center}
+.avatar{width:56px;height:56px;border-radius:8px;object-fit:cover;border:1px solid #eee}
+.player-info{flex:1;display:flex;flex-direction:column}
+.player-name{font-weight:800}
+.player-meta{font-size:0.9rem;color:var(--muted)}
+.player-actions{display:flex;gap:8px;align-items:center}
+
+/* badges */
+.badge{padding:6px 10px;border-radius:999px;font-weight:800;font-size:0.85rem;color:#222}
+.badge-experts{background:var(--experts);color:#fff}
+.badge-champion{background:var(--champion);color:#fff}
+.badge-confirme{background:var(--confirme);color:#222}
+.badge-inter{background:var(--inter);color:#002a56}
+.badge-deb{background:var(--deb);color:#fff}
+
+/* buttons */
+.btn{background:var(--accent);color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer;font-weight:700}
+.btn.secondary{background:#fff;color:var(--text);border:1px solid #ddd}
+
+/* modal */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;z-index:3000;padding:20px}
+.modal[aria-hidden="false"]{display:flex}
+.modal-content{background:white;border-radius:10px;padding:18px;max-width:620px;width:100%;position:relative}
+.modal-close{position:absolute;right:10px;top:10px;background:transparent;border:none;font-size:18px;cursor:pointer}
+.modal-avatar{width:84px;height:84px;border-radius:8px;object-fit:cover;margin-right:12px}
+.profile-row{display:flex;gap:12px;align-items:center}
+
+/* small helpers */
+.you-label{color:var(--accent);font-weight:900;margin-left:8px}
+.empty{color:var(--muted);padding:18px;text-align:center}
+
+/* responsive */
+@media(max-width:720px){
+  .search{width:140px}
+  .categories{gap:6px}
+  .cat-btn{min-width:80px;padding:8px 10px;font-size:0.9rem}
+}

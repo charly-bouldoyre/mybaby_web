@@ -1,0 +1,241 @@
+:root{
+  --rouge:#bc1515;
+  --bordeaux:#953c3c;
+  --gris-fonce:#3b3a3a;
+  --beige:#eadec8;
+  --gris-clair:#f8f4eb;
+  --bleu:#2b88d5;
+}
+
+*{box-sizing:border-box}
+
+body{
+  background:var(--beige);
+  font-family: "Segoe UI", Arial, sans-serif;
+  margin:0;
+  padding:0;
+  color:var(--gris-fonce);
+}
+
+/* header / nav */
+header{
+  background:var(--rouge);
+  color:#fff;
+  padding:12px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:3px solid var(--bordeaux);
+  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+.brand{font-weight:700; font-size:1.25rem; letter-spacing:1px}
+nav{display:flex; gap:10px; align-items:center}
+
+/* nav buttons */
+.nav-btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 12px;
+  background:var(--bordeaux);
+  color:#fff;
+  text-decoration:none;
+  border-radius:14px;
+  font-weight:600;
+  box-shadow:0 2px 6px rgba(0,0,0,0.06);
+  transition:transform .12s, background .12s;
+}
+.nav-btn svg{width:18px; height:18px; flex-shrink:0}
+.nav-btn:hover{transform:translateY(-3px); background:var(--gris-fonce)}
+
+/* Main area */
+main{
+  max-width:1100px;
+  margin:28px auto;
+  border-radius:16px;
+  padding:0;
+  box-shadow:0 6px 24px rgba(0,0,0,0.06);
+  overflow:hidden;
+  background:var(--gris-clair);
+}
+
+.hero{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/7;
+  display:block;
+  background-color:#000;
+}
+.hero img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  filter: contrast(0.95) saturate(0.95);
+}
+
+.slogan{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: #eadec8;
+  text-align: center;
+  padding: 12px 18px;
+  background: rgba(59,58,58,0.35);
+  backdrop-filter: blur(4px);
+  border-radius: 10px;
+  border: 1px solid rgba(234,236,200,0.18);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  max-width: 92%;
+}
+.slogan h1{
+  margin: 0;
+  font-size: 1.6rem;
+  color: #f6efe6;
+  letter-spacing: 0.6px;
+  line-height: 1.1;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.45);
+}
+.slogan p{
+  margin: 8px 0 0 0;
+  font-size: 0.95rem;
+  color: #f6efe6;
+  opacity: 0.95;
+}
+
+.hero-caption{
+  padding: 14px 18px;
+  background: var(--gris-clair);
+  font-size: 0.95rem;
+  color: var(--gris-fonce);
+  text-align: center;
+}
+
+.logo-bottom-left{
+  position:fixed;
+  left:18px;
+  bottom:14px;
+  width:84px;
+  height:84px;
+  pointer-events:none;
+  z-index:999;
+}
+
+@media (max-width:900px){
+  .slogan h1{font-size:1.25rem}
+  .slogan p{font-size:0.9rem}
+}
+@media (max-width:640px){
+  .nav-btn {padding:8px; font-size:.95rem}
+  .logo-bottom-left{left:10px; bottom:10px; width:64px; height:64px}
+  .hero{aspect-ratio: 4/3}
+}
+
+########################################################################## MapPage css
+
+:root{
+  --rouge:#bc1515;
+  --beige:#eadec8;
+  --gris-clair:#f8f4eb;
+  --gris-fonce:#3b3a3a;
+  --bordeaux:#953c3c;
+}
+
+body{
+  margin:0;
+  font-family:"Segoe UI",Arial,sans-serif;
+  background:var(--beige);
+  color:var(--gris-fonce);
+}
+
+header{
+  background:var(--rouge);
+  color:#fff;
+  padding:12px 16px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:3px solid var(--bordeaux);
+}
+header .brand{font-weight:700}
+header nav a{
+  color:#fff;
+  text-decoration:none;
+  margin-left:10px;
+  font-weight:600;
+  background:var(--bordeaux);
+  padding:8px 12px;
+  border-radius:12px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+
+.container{max-width:1100px;margin:18px auto;padding:12px}
+
+.map-wrap{
+  position:relative;
+  height:70vh;
+  border-radius:12px;
+  overflow:hidden;
+  border:2px solid var(--bordeaux);
+}
+#map{width:100%;height:100%}
+
+.controls{
+  position:absolute;
+  top:12px;
+  right:12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  z-index:500;
+}
+.ctrl-btn{
+  background:white;
+  border-radius:10px;
+  padding:8px 10px;
+  border:1px solid rgba(0,0,0,0.08);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+  box-shadow:0 3px 10px rgba(0,0,0,0.08);
+  font-weight:600;
+  color:var(--gris-fonce);
+}
+
+.bottom-actions{
+  margin-top:12px;
+  display:flex;
+  gap:10px;
+  justify-content:center;
+}
+
+.legend{
+  position:absolute;
+  left:12px;
+  top:12px;
+  background:rgba(255,255,255,0.95);
+  padding:8px 10px;
+  border-radius:8px;
+  z-index:400;
+  border:1px solid #eee;
+}
+
+.logo-bottom-left{
+  position:fixed;
+  left:18px;
+  bottom:14px;
+  width:84px;
+  height:84px;
+  pointer-events:none;
+  z-index:999;
+}
+
+@media(max-width:700px){
+  .controls{right:8px;top:8px}
+}
+
+#################################################################################################################

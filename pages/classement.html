@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>MyBaby — Classement</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="classement.css">
+</head>
+<body>
+  <header>
+    <div class="brand">MyBaby</div>
+    <nav aria-label="Navigation principale">
+      <a class="nav-btn" href="Accueil.html" title="Accueil" aria-label="Accueil">Accueil</a>
+      <a class="nav-btn" href="carte.html" title="Carte" aria-label="Carte">Carte</a>
+      <a id="profileLink" class="nav-btn" href="profil.html" title="Profil" aria-label="Profil">Profil</a>
+      <a class="nav-btn" href="match.html" title="Match" aria-label="Match">Match</a>
+    </nav>
+  </header>
+
+  <main class="wrap" role="main" aria-labelledby="page-title">
+    <div class="page-head">
+      <h1 id="page-title">Classement des joueurs</h1>
+      <div class="controls">
+        <input id="searchBox" class="search" placeholder="Rechercher un joueur..." aria-label="Rechercher un joueur">
+        <button id="btnMyRank" class="btn secondary" title="Voir mon rang">Mon rang</button>
+      </div>
+    </div>
+
+    <div class="categories" role="tablist" aria-label="Catégories de classement">
+      <button class="cat-btn cat-experts active" data-cat="experts" role="tab" aria-selected="true">Experts <span id="count-experts" class="count"></span></button>
+      <button class="cat-btn cat-champion" data-cat="champion" role="tab" aria-selected="false">Champion <span id="count-champion" class="count"></span></button>
+      <button class="cat-btn cat-confirme" data-cat="confirme" role="tab" aria-selected="false">Confirmé <span id="count-confirme" class="count"></span></button>
+      <button class="cat-btn cat-inter" data-cat="intermediaire" role="tab" aria-selected="false">Intermédiaire <span id="count-intermediaire" class="count"></span></button>
+      <button class="cat-btn cat-deb" data-cat="debutant" role="tab" aria-selected="false">Débutant <span id="count-debutant" class="count"></span></button>
+    </div>
+
+    <section class="board" id="board" aria-live="polite">
+      <div id="list" class="ranking-list" role="list"></div>
+    </section>
+  </main>
+
+  <!-- modal profile -->
+  <div id="modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <button id="modalClose" class="modal-close" aria-label="Fermer">✕</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+  /****************************************************************
+   * Classement page
+   * - Calcul des points à partir des matches fournis (wins/goals)
+   * - Catégories : experts / champion / confirme / intermediaire / debutant
+   * - Recherche, compter et filtrer par catégorie, afficher profil modal
+   ****************************************************************/
+
+  // Exemple de joueurs (minimum : id unique)
+  const players = [
+    { id:1, name:'Amina', avatar:'https://i.pravatar.cc/120?img=20' },
+    { id:2, name:'Marie', avatar:'https://i.pravatar.cc/120?img=11' },
+    { id:3, name:'Sébastien', avatar:'https://i.pravatar.cc/120?img=10' },
+    { id:4, name:'Lucas', avatar:'https://i.pravatar.cc/120?img=12' },
+    { id:5, name:'Youssef', avatar:'https://i.pravatar.cc/120?img=7' },
+    { id:6, name:'Claire', avatar:'https://i.pravatar.cc/120?img=15' },
+    { id:7, name:'Nora', avatar:'https://i.pravatar.cc/120?img=4' },
+    { id:8, name:'Tom', avatar:'https://i.pravatar.cc/120?img=30' },
+    { id:9, name:'Paul', avatar:'https://i.pravatar.cc/120?img=9' },
+    { id:10, name:'Lea', avatar:'https://i.pravatar.cc/120?img=21' }
+  ];
+
+  // Exemple de matches (format simple). Chaque match influence le classement.
+  // score: "A - B" where A is score for playerA, B for playerB
+  const matches = [
+    { id:101, a:1, b:2, scoreA:7, scoreB:5, date:'2026-01-10' },
+    { id:102, a:2, b:3, scoreA:6, scoreB:4, date:'2026-01-11' },
+    { id:103, a:4, b:1, scoreA:5, scoreB:8, date:'2026-01-12' },
+    { id:104, a:5, b:6, scoreA:3, scoreB:2, date:'2026-01-13' },
+    { id:105, a:1, b:9, scoreA:4, scoreB:6, date:'2026-01-14' },
+    { id:106, a:9, b:3, scoreA:5, scoreB:1, date:'2026-01-15' },
+    { id:107, a:10, b:4, scoreA:7, scoreB:3, date:'2026-01-16' },
+    { id:108, a:2, b:1, scoreA:2, scoreB:3, date:'2026-01-17' },
+    { id:109, a:7, b:8, scoreA:1, scoreB:4, date:'2026-01-18' },
+    { id:110, a:6, b:5, scoreA:4, scoreB:4, date:'2026-01-19' } // match nul
+  ];
+
+  // Récupérer l'utilisateur courant depuis localStorage (profil). Si absent : user fictif.
+  function loadLocalUser(){
+    try {
+      const v = localStorage.getItem('mybaby_user');
+      if (!v) return { id:9999, name:'Vous', avatar:'https://i.pravatar.cc/120?img=65' };
+      const u = JSON.parse(v);
+      return { id: u.id || 9999, name: u.pseudo || 'Vous', avatar: u.avatarDataUrl || 'https://i.pravatar.cc/120?img=65' };
+    } catch(e){ return { id:9999, name:'Vous', avatar:'https://i.pravatar.cc/120?img=65' }; }
+  }
+  const currentUser = loadLocalUser();
+
+  // Si current user n'est pas dans players, on l'ajoute (afin qu'il apparaisse)
+  if (!players.find(p => p.id === currentUser.id)) {
+    players.push({ id: currentUser.id, name: currentUser.name, avatar: currentUser.avatar });
+  }
+
+  // Calcul des stats et points à partir des matches
+  function computeStats(playersList, matchesList){
+    const stats = new Map();
+    playersList.forEach(p => stats.set(p.id, { id:p.id, name:p.name, avatar:p.avatar, played:0, wins:0, losses:0, draws:0, goalsFor:0, goalsAgainst:0, points:1000 }));
+
+    matchesList.forEach(m => {
+      const pa = stats.get(m.a);
+      const pb = stats.get(m.b);
+      if (!pa || !pb) return;
+      pa.played++; pb.played++;
+      pa.goalsFor += (m.scoreA|0); pa.goalsAgainst += (m.scoreB|0);
+      pb.goalsFor += (m.scoreB|0); pb.goalsAgainst += (m.scoreA|0);
+
+      if (m.scoreA > m.scoreB) { pa.wins++; pb.losses++; pa.points += 25; pb.points -= 10; }
+      else if (m.scoreA < m.scoreB) { pb.wins++; pa.losses++; pb.points += 25; pa.points -= 10; }
+      else { pa.draws++; pb.draws++; pa.points += 5; pb.points += 5; }
+      // small bonus for goals margin
+      const diff = (m.scoreA - m.scoreB);
+      if (diff !== 0) {
+        const bonusA = Math.max(0, Math.min(10, diff*2));
+        const bonusB = Math.max(0, Math.min(10, (-diff)*2));
+        if (diff>0) pa.points += bonusA;
+        else pb.points += bonusB;
+      }
+    });
+
+    // additional small adjustment from goals difference
+    stats.forEach(s => {
+      s.points += Math.round((s.goalsFor - s.goalsAgainst) * 1.2);
+      // keep points within reasonable bounds
+      if (s.points < 300) s.points = 300;
+    });
+
+    // convert map to sorted array by points desc
+    return Array.from(stats.values()).sort((a,b) => b.points - a.points);
+  }
+
+  // Catégories définies par seuils (modifiable)
+  function categoryOf(points){
+    if (points >= 1600) return 'experts';
+    if (points >= 1500) return 'champion';
+    if (points >= 1400) return 'confirme';
+    if (points >= 1250) return 'intermediaire';
+    return 'debutant';
+  }
+
+  // DOM refs
+  const listEl = document.getElementById('list');
+  const searchBox = document.getElementById('searchBox');
+  const modal = document.getElementById('modal');
+  const modalContent = document.getElementById('modalContent');
+  const modalClose = document.getElementById('modalClose');
+  const btnMyRank = document.getElementById('btnMyRank');
+
+  // categories buttons
+  const catButtons = Array.from(document.querySelectorAll('.cat-btn'));
+
+  let state = {
+    activeCat: 'experts',
+    query: ''
+  };
+
+  // Render counts and list
+  function renderAll(){
+    const ranking = computeStats(players, matches);
+    // fill counts
+    const counts = { experts:0, champion:0, confirme:0, intermediaire:0, debutant:0 };
+    ranking.forEach(p => counts[categoryOf(p.points)]++);
+    document.getElementById('count-experts').textContent = counts.experts ? `(${counts.experts})` : '';
+    document.getElementById('count-champion').textContent = counts.champion ? `(${counts.champion})` : '';
+    document.getElementById('count-confirme').textContent = counts.confirme ? `(${counts.confirme})` : '';
+    document.getElementById('count-intermediaire').textContent = counts.intermediaire ? `(${counts.intermediaire})` : '';
+    // Affiche le nombre effectivement visible (max 4) dans l'onglet Débutant
+    document.getElementById('count-debutant').textContent = counts.debutant ? `(${Math.min(counts.debutant, 4)})` : '';
+
+    renderList(ranking);
+  }
+
+  function renderList(ranking){
+    listEl.innerHTML = '';
+    // filter by active category and search query
+    let shown = ranking.filter(p => {
+      const cat = categoryOf(p.points);
+      if (cat !== state.activeCat) return false;
+      if (!state.query) return true;
+      const q = state.query.toLowerCase();
+      return String(p.name).toLowerCase().includes(q) || String(p.points).includes(q);
+    });
+
+    // Limiter les débutants à 4 joueurs (modification demandée)
+    if (state.activeCat === 'debutant') {
+      shown = shown.slice(0, 4);
+    }
+
+    if (!shown.length){
+      const em = document.createElement('div'); em.className='empty'; em.textContent = 'Aucun joueur trouvé dans cette catégorie.';
+      listEl.appendChild(em);
+      return;
+    }
+
+    shown.forEach((p, idx) => {
+      const item = document.createElement('div');
+      item.className = 'player-item' + (p.id === currentUser.id ? ' you' : '');
+      item.setAttribute('role','listitem');
+      item.innerHTML = `
+        <div class="rank">${idx+1}</div>
+        <img class="avatar" src="${escapeHtml(p.avatar)}" alt="${escapeHtml(p.name)}">
+        <div class="player-info">
+          <div class="player-name">${escapeHtml(p.name)} ${p.id===currentUser.id ? '<span class="you-label">Vous</span>' : ''}</div>
+          <div class="player-meta">Points: <strong>${p.points}</strong> — ${p.wins}W / ${p.losses}L — GF:${p.goalsFor}</div>
+        </div>
+        <div class="player-actions">
+          <div class="badge ${categoryClass(categoryOf(p.points))}">${labelOf(categoryOf(p.points))}</div>
+          <button class="btn secondary view-btn" data-id="${p.id}">Voir</button>
+        </div>
+      `;
+      listEl.appendChild(item);
+    });
+
+    // add handlers for view buttons
+    listEl.querySelectorAll('.view-btn').forEach(b => b.addEventListener('click', e => {
+      const id = +e.currentTarget.dataset.id;
+      openProfileModal(id, ranking);
+    }));
+  }
+
+  // category helpers
+  function labelOf(cat){
+    return cat === 'experts' ? 'Experts'
+         : cat === 'champion' ? 'Champion'
+         : cat === 'confirme' ? 'Confirmé'
+         : cat === 'intermediaire' ? 'Intermédiaire'
+         : 'Débutant';
+  }
+  function categoryClass(cat){
+    return {
+      experts: 'badge-experts',
+      champion: 'badge-champion',
+      confirme: 'badge-confirme',
+      intermediaire: 'badge-inter',
+      debutant: 'badge-deb'
+    }[cat] || '';
+  }
+
+  // modal profile
+  function openProfileModal(id, ranking){
+    const rank = ranking || computeStats(players, matches);
+    const p = rank.find(x => x.id === id);
+    if (!p) return;
+    modalContent.innerHTML = `
+      <div class="profile-row">
+        <img src="${escapeHtml(p.avatar)}" alt="${escapeHtml(p.name)}" class="modal-avatar">
+        <div>
+          <h3>${escapeHtml(p.name)} ${p.id===currentUser.id ? '<small class="you-label"> (Vous)</small>' : ''}</h3>
+          <div class="player-meta">Points: <strong>${p.points}</strong></div>
+          <div class="player-meta">Matchs: ${p.played} — ${p.wins}W / ${p.losses}L / ${p.draws}N</div>
+          <div style="margin-top:8px"><span class="badge ${categoryClass(categoryOf(p.points))}">${labelOf(categoryOf(p.points))}</span></div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="proposeBtn" class="btn" ${p.id===currentUser.id ? 'disabled' : ''}>Proposer RDV</button>
+        <button id="closeBtn" class="btn secondary">Fermer</button>
+      </div>
+    `;
+    modal.setAttribute('aria-hidden','false');
+    modal.style.display = 'flex';
+    document.getElementById('closeBtn').addEventListener('click', closeModal);
+    const propose = document.getElementById('proposeBtn');
+    if (propose) propose.addEventListener('click', ()=> {
+      closeModal();
+      alert('Proposition envoyée (simulation) à ' + p.name + '.');
+    });
+  }
+
+  function closeModal(){
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden','true');
+    modalContent.innerHTML = '';
+  }
+
+  modalClose.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+  // utility
+  function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+  // category button clicks
+  catButtons.forEach(b => b.addEventListener('click', ()=> {
+    catButtons.forEach(x => { x.classList.remove('active'); x.setAttribute('aria-selected','false'); });
+    b.classList.add('active'); b.setAttribute('aria-selected','true');
+    state.activeCat = b.dataset.cat;
+    renderAll();
+    // focus search cleared to show full category
+  }));
+
+  // search input
+  searchBox.addEventListener('input', (e) => {
+    state.query = (e.target.value || '').trim();
+    renderAll();
+  });
+
+  // Mon rang: montrer la catégorie et scroller vers l'élément "vous"
+  btnMyRank.addEventListener('click', () => {
+    const ranking = computeStats(players, matches);
+    const me = ranking.find(p => p.id === currentUser.id);
+    if (!me) return alert('Utilisateur introuvable.');
+    const myCat = categoryOf(me.points);
+    // switch category if needed
+    const btn = document.querySelector(`.cat-btn[data-cat="${myCat}"]`);
+    if (btn) btn.click();
+    // after render, find and scroll to you
+    setTimeout(()=> {
+      const you = document.querySelector('.player-item.you');
+      if (you) {
+        you.scrollIntoView({behavior:'smooth', block:'center'});
+        you.classList.add('flash');
+        setTimeout(()=> you.classList.remove('flash'), 1000);
+      } else {
+        alert('Vous n\'êtes pas dans cette catégorie.');
+      }
+    }, 80);
+  });
+
+  // Update profileLink to include returnTo (comme les autres pages)
+  (function(){
+    const p = document.getElementById('profileLink');
+    if (!p) return;
+    try { p.href = 'profil.html?returnTo=' + encodeURIComponent(location.href); } catch(e) { p.href = 'profil.html'; }
+  })();
+
+  // initial render
+  renderAll();
+  </script>
+</body>
+</html>

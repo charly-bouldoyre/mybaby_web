@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>MyBaby — Match & Relations</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="match.css">
+</head>
+<body>
+  <header>
+    <div class="brand">MyBaby</div>
+    <nav aria-label="Navigation principale">
+      <a class="nav-btn" href="Accueil.html" title="Accueil" aria-label="Accueil">Accueil</a>
+      <a class="nav-btn" href="carte.html" title="Carte" aria-label="Carte">Carte</a>
+      <a id="profileLink" class="nav-btn" href="profil.html" title="Profil" aria-label="Profil">Profil</a>
+      <!-- id ajouté pour cibler et forcer le returnTo -->
+      <a id="linkClassement" class="nav-btn" href="classement.html" title="Classement" aria-label="Classement">Classement</a>
+    </nav>
+  </header>
+
+  <main class="layout" role="main" aria-labelledby="page-title">
+    <h1 id="page-title" class="visually-hidden">Matchs & Relations</h1>
+
+    <!-- Colonne de gauche: onglets verticaux + actions -->
+    <aside class="left-panel" aria-label="Navigation Match">
+      <div class="tabs" role="tablist" aria-orientation="vertical">
+        <button class="tab active" id="tab-amis" role="tab" aria-selected="true" aria-controls="panel" data-target="amis">Amis</button>
+        <button class="tab" id="tab-stats" role="tab" aria-selected="false" aria-controls="panel" data-target="stats">Stat</button>
+        <button class="tab" id="tab-duel" role="tab" aria-selected="false" aria-controls="panel" data-target="duel">Duel</button>
+      </div>
+
+      <div class="left-footer">
+        <button id="btnNewMatch" class="btn trigger-match" aria-label="Déclencher un match">▶ Déclencher un match</button>
+      </div>
+    </aside>
+
+    <!-- Zone de contenu à droite -->
+    <section id="panel" class="panel" tabindex="-1" aria-live="polite">
+      <h2 class="panel-title">Classement & Amis</h2>
+      <p class="muted">La liste des amis et le classement apparaîtront ici.</p>
+    </section>
+  </main>
+
+  <!-- Modal -->
+  <div id="modal" class="modal" aria-hidden="true" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <button id="modalClose" class="modal-close" aria-label="Fermer">✕</button>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    // Données d'exemple
+    const sampleFriends = [
+      {id:1,name:"Amina",points:1605,wins:25,losses:4,avatar:"https://i.pravatar.cc/120?img=20",relation:"ami"},
+      {id:2,name:"Marie",points:1580,wins:21,losses:6,avatar:"https://i.pravatar.cc/120?img=11",relation:"ami"},
+      {id:3,name:"Sébastien",points:1450,wins:12,losses:8,avatar:"https://i.pravatar.cc/120?img=10",relation:"ami"},
+      {id:4,name:"Lucas",points:1320,wins:8,losses:10,avatar:"https://i.pravatar.cc/120?img=12",relation:"suivi"}
+    ];
+    const sampleStats = {played:41,wins:25,losses:16,goalsFor:124,goalsAgainst:98};
+    const sampleMatches = [{id:101,opponent:"Marie",score:"7 - 5",date:"2026-01-10",place:"Bar Rouge"}];
+
+    // Propositions RDV stockage local
+    const STORAGE_PROPOSALS = 'mybaby_meet_proposals';
+    function loadProposals(){ try { return JSON.parse(localStorage.getItem(STORAGE_PROPOSALS) || '[]'); } catch(e){ return []; } }
+    function saveProposals(v){ try { localStorage.setItem(STORAGE_PROPOSALS, JSON.stringify(v)); } catch(e){} }
+
+    // DOM refs
+    const panel = document.getElementById('panel');
+    const modal = document.getElementById('modal');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+
+    // tabs and left buttons
+    const tabs = document.querySelectorAll('.tab');
+    const btnNewMatch = document.getElementById('btnNewMatch');
+
+    // utilities
+    function esc(s){ return String(s||'').replace(/[&<>"']/g,m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function openModal(html){ modalBody.innerHTML = html; modal.style.display='flex'; modal.setAttribute('aria-hidden','false'); }
+    function closeModal(){ modal.style.display='none'; modal.setAttribute('aria-hidden','true'); modalBody.innerHTML=''; }
+    modalClose.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e)=> { if (e.target === modal) closeModal(); });
+
+    // rendering functions (inchangées) ...
+    function renderFriendsPanel(){
+      const sorted = sampleFriends.slice().sort((a,b)=> b.points - a.points);
+      let html = `<div class="panel-header"><h2>Classement & Amis</h2>
+                  <div class="panel-controls"><input id="searchFriend" placeholder="Rechercher..." /><select id="filterRelation"><option value="">Tous</option><option value="ami">Amis</option><option value="suivi">Suivis</option></select></div></div>`;
+      html += '<div class="friends-list">';
+      sorted.forEach((f, idx)=>{
+        html += `<div class="friend-item" data-id="${f.id}">
+          <div class="friend-left"><div class="rank">${idx+1}</div><img class="friend-avatar" src="${esc(f.avatar)}" alt="${esc(f.name)}"><div class="friend-info"><strong>${esc(f.name)}</strong><div class="small-muted">Points: ${f.points} — ${f.wins}W / ${f.losses}L — ${esc(f.relation||'—')}</div></div></div>
+          <div class="friend-actions"><button class="btn small view-btn" data-id="${f.id}">Voir</button><button class="btn small propose-btn" data-id="${f.id}">Proposer RDV</button></div>
+        </div>`;
+      });
+      html += '</div>';
+
+      // proposal history
+      const proposals = loadProposals();
+      html += `<hr><h3>Propositions</h3>`;
+      if (!proposals.length) html += '<div class="small-muted">Aucune proposition envoyée.</div>';
+      else {
+        html += '<div class="proposals">';
+        proposals.slice().reverse().forEach(p=>{
+          html += `<div class="proposal-item"><div><strong>${esc(p.toName)}</strong> — ${esc(p.date)} ${esc(p.time||'')} — ${esc(p.place||'')}</div><div class="small-muted">Statut: ${esc(p.status||'Envoyée')}</div></div>`;
+        });
+        html += '</div>';
+      }
+
+      panel.innerHTML = html;
+
+      // attach listeners
+      panel.querySelectorAll('.view-btn').forEach(b=> b.addEventListener('click', e=>{
+        const id = +e.currentTarget.dataset.id;
+        const f = sampleFriends.find(x=>x.id===id);
+        if (!f) return;
+        openModal(`<img src="${esc(f.avatar)}" style="width:84px;height:84px;border-radius:8px"><h3>${esc(f.name)}</h3><p>Points : <strong>${f.points}</strong></p><p>${f.wins} victoires — ${f.losses} défaites</p><div style="text-align:right;margin-top:10px"><button class="btn" id="closeFriend">Fermer</button></div>`);
+        document.getElementById('closeFriend').addEventListener('click', closeModal);
+      }));
+
+      panel.querySelectorAll('.propose-btn').forEach(b=> b.addEventListener('click', e=>{
+        const id = +e.currentTarget.dataset.id; proposeMeeting(id);
+      }));
+
+      // search & filter
+      const searchInput = document.getElementById('searchFriend');
+      const filterSelect = document.getElementById('filterRelation');
+      function applyFilter(){
+        const q = (searchInput.value||'').toLowerCase();
+        const rel = filterSelect.value;
+        panel.querySelectorAll('.friend-item').forEach(item=>{
+          const id = +item.dataset.id;
+          const f = sampleFriends.find(x=>x.id===id);
+          let ok = true;
+          if (q) ok = (f.name.toLowerCase().includes(q) || String(f.points).includes(q));
+          if (rel && f.relation !== rel) ok = false;
+          item.style.display = ok ? '' : 'none';
+        });
+      }
+      searchInput.addEventListener('input', applyFilter);
+      filterSelect.addEventListener('change', applyFilter);
+    }
+
+    function proposeMeeting(friendId){
+      const f = sampleFriends.find(x=>x.id===friendId);
+      if (!f) return alert('Ami introuvable.');
+      const html = `
+        <h3>Proposer un RDV à ${esc(f.name)}</h3>
+        <label>Date<br><input id="meetDate" type="date"></label>
+        <label>Heure<br><input id="meetTime" type="time"></label>
+        <label>Lieu<br><input id="meetPlace" type="text" placeholder="Ex : Bar Rouge"></label>
+        <label>Message (optionnel)<br><textarea id="meetMsg" rows="3"></textarea></label>
+        <div style="text-align:right;margin-top:10px"><button id="sendProposal" class="btn">Envoyer</button><button id="cancelProposal" class="btn secondary">Annuler</button></div>
+      `;
+      openModal(html);
+      document.getElementById('cancelProposal').addEventListener('click', closeModal);
+      document.getElementById('sendProposal').addEventListener('click', ()=>{
+        const date = document.getElementById('meetDate').value;
+        if (!date) return alert('Choisissez une date.');
+        const time = document.getElementById('meetTime').value;
+        const place = document.getElementById('meetPlace').value.trim();
+        const msg = document.getElementById('meetMsg').value.trim();
+        const proposals = loadProposals();
+        const obj = { id: Date.now(), toId: f.id, toName: f.name, date, time, place, message: msg, createdAt: new Date().toISOString(), status: 'Envoyée' };
+        proposals.push(obj);
+        saveProposals(proposals);
+        closeModal();
+        alert(`Proposition envoyée à ${f.name} pour le ${date}${time ? ' à ' + time : ''}.`);
+        renderActiveTab(); // refresh panel
+      });
+    }
+
+    function renderStatsPanel(){
+      panel.innerHTML = `<h2>Classement</h2>
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-value">${sampleStats.played}</div><div class="stat-label">Matchs</div></div>
+          <div class="stat-card"><div class="stat-value">${sampleStats.wins}</div><div class="stat-label">Victoires</div></div>
+          <div class="stat-card"><div class="stat-value">${sampleStats.losses}</div><div class="stat-label">Défaites</div></div>
+          <div class="stat-card"><div class="stat-value">${sampleStats.goalsFor}</div><div class="stat-label">Buts marqués</div></div>
+          <div class="stat-card"><div class="stat-value">${sampleStats.goalsAgainst}</div><div class="stat-label">Buts encaissés</div></div>
+        </div>`;
+    }
+
+    function renderDuelPanel(){
+      if (!sampleMatches.length){ panel.innerHTML = '<p>Aucun match enregistré.</p>'; return; }
+      let html = '<h2>Fiche match</h2><div class="matches-list">';
+      sampleMatches.forEach(m=>{
+        html += `<div class="match-item"><div class="match-main"><strong>${esc(m.opponent)}</strong><div class="small-muted">${esc(m.place)} — ${esc(m.date)}</div></div><div class="match-right"><div class="score">${esc(m.score)}</div><button class="btn small view-match" data-id="${m.id}">Détails</button></div></div>`;
+      });
+      html += '</div>';
+      panel.innerHTML = html;
+      panel.querySelectorAll('.view-match').forEach(b=>{
+        b.addEventListener('click', e=>{
+          const id = +e.currentTarget.dataset.id;
+          const m = sampleMatches.find(x=>x.id===id);
+          openModal(`<h3>Match vs ${esc(m.opponent)}</h3><p><strong>Score :</strong> ${esc(m.score)}</p><p><strong>Date :</strong> ${esc(m.date)}</p><p><strong>Lieu :</strong> ${esc(m.place)}</p><div style="text-align:right"><button class="btn" id="closeMatch">Fermer</button></div>`);
+          document.getElementById('closeMatch').addEventListener('click', closeModal);
+        });
+      });
+    }
+
+    // Tab behaviour
+    function setActiveTab(targetName){
+      tabs.forEach(t=>{
+        const isActive = t.dataset.target === targetName;
+        t.classList.toggle('active', isActive);
+        t.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      });
+    }
+
+    function renderActiveTab(){
+      const active = Array.from(tabs).find(t => t.classList.contains('active'));
+      const target = active ? active.dataset.target : 'amis';
+      if (target === 'amis') renderFriendsPanel();
+      else if (target === 'stats') renderStatsPanel();
+      else if (target === 'duel') renderDuelPanel();
+    }
+
+    // attach tab clicks
+    tabs.forEach(t => t.addEventListener('click', ()=> { setActiveTab(t.dataset.target); renderActiveTab(); }));
+
+    // new match button
+    function openNewMatch(){
+      const options = sampleFriends.map(f=>`<option value="${f.id}">${esc(f.name)}</option>`).join('');
+      openModal(`<h3>Déclencher un match</h3>
+        <label>Adversaire<br><select id="selOpp">${options}</select></label>
+        <label>Date & heure<br><input id="matchDate" type="datetime-local"></label>
+        <label>Lieu<br><input id="matchPlace" type="text" placeholder="Ex : Bar Rouge"></label>
+        <div style="text-align:right;margin-top:12px"><button id="startMatch" class="btn">Démarrer</button><button id="cancelMatch" class="btn secondary">Annuler</button></div>`);
+      document.getElementById('cancelMatch').addEventListener('click', closeModal);
+      document.getElementById('startMatch').addEventListener('click', ()=>{
+        const id = +document.getElementById('selOpp').value;
+        const date = document.getElementById('matchDate').value || new Date().toISOString().slice(0,10);
+        const place = document.getElementById('matchPlace').value || 'Non précisé';
+        const opp = sampleFriends.find(f=>f.id===id);
+        if (!opp) { alert('Choisir un adversaire'); return; }
+        sampleMatches.unshift({id:Date.now(),opponent:opp.name,score:'0 - 0',date,place});
+        closeModal();
+        setActiveTab('duel');
+        renderActiveTab();
+        alert('Match déclenché (simulation).');
+      });
+    }
+    if (btnNewMatch) btnNewMatch.addEventListener('click', openNewMatch);
+
+    // initialize view
+    setActiveTab('amis');
+    renderActiveTab();
+
+    // update profile link with returnTo
+    (function(){
+      const p = document.getElementById('profileLink');
+      if (!p) return;
+      try { p.href = 'profil.html?returnTo=' + encodeURIComponent(location.href); } catch(e) { p.href = 'profil.html'; }
+    })();
+  </script>
+
+  <!-- Script ajouté : ouvrir classement.html quand on clique sur "Classement" -->
+  <script>
+  (function(){
+    'use strict';
+    const DEST = 'classement.html';
+    const makeDest = () => DEST + '?returnTo=' + encodeURIComponent(location.href);
+
+    function mentionsClassement(s){
+      if (!s) return false;
+      return String(s).toLowerCase().includes('classement') || String(s).toLowerCase().includes('statistique') || String(s).toLowerCase().includes('stats');
+    }
+
+    // Vérifie si l'élément est dans une zone à exclure (onglets, panneaux, modal, nav, ...)
+    function isExcluded(el){
+      if (!el || !el.closest) return false;
+      const excludeSelectors = [
+        '.tabs',
+        '.left-logos',
+        '.panel',
+        'header',
+        'nav',
+        '#modal',
+        '.bar-actions',
+        '.friend-actions',
+        '[data-no-classement]'
+      ];
+      return excludeSelectors.some(sel => el.closest(sel));
+    }
+
+    // Met à jour les ancres standards sauf celles dans les zones exclues
+    try {
+      document.querySelectorAll('a[href]').forEach(a=>{
+        try {
+          if (isExcluded(a)) return;
+          const href = a.getAttribute('href') || '';
+          const txt = (a.textContent || '') + ' ' + (a.getAttribute('title') || '') + ' ' + (a.getAttribute('aria-label') || '');
+          if (mentionsClassement(href) || mentionsClassement(txt)) {
+            a.setAttribute('href', makeDest());
+            a.dataset._classementFixed = '1';
+          }
+        } catch (e){}
+      });
+    } catch (e){}
+
+    // Délégation : n'intercepter que si l'élément n'est pas dans une zone exclue
+    document.addEventListener('click', function(e){
+      try {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        const el = e.target.closest && e.target.closest('a, button, [role="button"], [data-action]');
+        if (!el) return;
+        if (isExcluded(el)) return;
+
+        const txt = (el.textContent || '').trim();
+        const title = el.getAttribute && (el.getAttribute('title') || '');
+        const aria = el.getAttribute && (el.getAttribute('aria-label') || '');
+        const href = el.getAttribute && (el.getAttribute('href') || '');
+
+        if (mentionsClassement(txt) || mentionsClassement(title) || mentionsClassement(aria) || mentionsClassement(href)) {
+          e.preventDefault();
+          if (el.tagName === 'A') {
+            try { el.setAttribute('href', makeDest()); } catch(_) {}
+          }
+          window.location.href = makeDest();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, true);
+
+    // --- AJOUT : forcer le lien "Classement" dans le nav à inclure returnTo ---
+    (function(){
+      try {
+        const lc = document.getElementById('linkClassement');
+        if (!lc) return;
+        lc.href = 'classement.html?returnTo=' + encodeURIComponent(location.href);
+      } catch(e){
+        // nothing
+      }
+    })();
+  })();
+  </script>
+</body>
+</html>
