@@ -1,0 +1,66 @@
+<div class="babyfoot-card" data-id="">
+  <div class="card-image">
+    <img src="" alt="Babyfoot" class="babyfoot-img">
+    <span class="card-badge">Gratuit</span>
+  </div>
+  
+  <div class="card-content">
+    <h3 class="card-title">Nom du lieu</h3>
+    <p class="card-location">📍 Adresse complète</p>
+    
+    <div class="card-info">
+      <div class="info-item">
+        <span class="info-label">Type:</span>
+        <span class="info-value">Bar</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Disponibilité:</span>
+        <span class="info-value availability">Disponible</span>
+      </div>
+    </div>
+
+    <div class="card-rating">
+      <span class="stars">⭐⭐⭐⭐⭐</span>
+      <span class="rating-count">(42 avis)</span>
+    </div>
+
+    <div class="card-actions">
+      <button class="btn-details">Voir détails</button>
+      <button class="btn-directions">Itinéraire</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Fonction pour créer une carte de babyfoot
+  function createBabyfootCard(data) {
+    const card = document.querySelector('.babyfoot-card').cloneNode(true);
+    
+    card.dataset.id = data.id;
+    card.querySelector('.babyfoot-img').src = data.image || '/images/babyfoot-default.jpg';
+    card.querySelector('.babyfoot-img').alt = data.name;
+    card.querySelector('.card-title').textContent = data.name;
+    card.querySelector('.card-location').textContent = `📍 ${data.address}`;
+    card.querySelector('.card-badge').textContent = data.isFree ? 'Gratuit' : 'Payant';
+    card.querySelector('.info-value').textContent = data.type;
+    card.querySelector('.availability').textContent = data.available ? 'Disponible' : 'Occupé';
+    
+    // Rating
+    const rating = Math.round(data.rating || 0);
+    card.querySelector('.stars').textContent = '⭐'.repeat(rating);
+    card.querySelector('.rating-count').textContent = `(${data.reviewCount || 0} avis)`;
+    
+    // Event listeners
+    card.querySelector('.btn-details').addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.location.href = `/pages/BabyfootDetails.html?id=${data.id}`;
+    });
+    
+    card.querySelector('.btn-directions').addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${data.lat},${data.lng}`, '_blank');
+    });
+    
+    return card;
+  }
+</script>

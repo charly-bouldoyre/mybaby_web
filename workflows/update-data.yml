@@ -1,0 +1,53 @@
+name: Update Babyfoot Data
+
+# Quand exécuter ce workflow :
+on:
+  # 1. Quand tu pushes sur la branche main
+  push:
+    branches: [ main ]
+  # 2. Tous les jours à minuit (automatique)
+  schedule:
+    - cron: '0 0 * * *'
+  # 3. Manuellement depuis l'interface GitHub
+  workflow_dispatch:
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Étape 1 : Récupère le code
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      
+    # Étape 2 : Configure Node.js
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    # Étape 3 : Installe les dépendances
+    - name: Install dependencies
+      run: |
+        npm install pg
+        npm install fs
+      
+    # Étape 4 : Script pour récupérer les données PostgreSQL
+    - name: Fetch data from PostgreSQL
+      env:
+        # ⚠️ STOCKE TES MOTS DE PASSE ICI :
+        # Settings → Secrets and variables → Actions
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+      run: node .github/scripts/fetch-data.js
+      
+    # Étape 5 : Déploie sur GitHub Pages
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./  # Publie tout le répertoire
+        keep_files: true # Garde les anciens fichiers
